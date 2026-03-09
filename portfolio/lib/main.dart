@@ -222,12 +222,10 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> with TickerProvid
                                   ],
                                 ),
                                 child: const Center(
-                                  child: CircleAvatar(
-                                    radius: 60,
-                                    backgroundColor: Colors.transparent,
-                                    backgroundImage: NetworkImage(
-                                      'https://drive.google.com/uc?export=view&id=1t3jF88bZHa7n9quI2dbo0pdXQ_TFboux',
-                                    ),
+                                  child: Icon(
+                                    Icons.account_circle,
+                                    size: 100,
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
