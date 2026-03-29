@@ -21,7 +21,7 @@ class PortfolioApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Ahmed Essamedeen - Mobile Developer',
+      title: 'Ahmed Essam - Mobile Developer',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
