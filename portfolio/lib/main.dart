@@ -5,13 +5,15 @@ void main() {
   runApp(const PortfolioApp());
 }
 
-const Color primaryBg = Color(0xFF0A0A0A);
-const Color secondaryBg = Color(0xFF1A1A1A);
-const Color accentColor = Color(0xFF007BFF);
+const Color primaryBg = Color(0xFF030014);
+const Color secondaryBg = Color(0xFF0A0A1A);
+const Color accentColor = Color(0xFF8B26EB);
+const Color accentSecondary = Color(0xFF0AD3FF);
 const Color textLight = Color(0xFFFFFFFF);
-const Color textGray = Color(0xFFB0B0B0);
-const Color cardBg = Color(0xFF1E1E1E);
-const Color borderColor = Color(0xFF333333);
+const Color textGray = Color(0xFFB7B8C9);
+const Color textGrayLight = Color(0xFFCBD5E1);
+const Color cardBg = Color(0xFF1A0E2E);
+const Color borderColor = Color(0xFF7042F8);
 
 class PortfolioApp extends StatelessWidget {
   const PortfolioApp({super.key});
@@ -69,14 +71,35 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: primaryBg.withOpacity(0.9),
+        backgroundColor: primaryBg.withOpacity(0.8),
         elevation: 0,
-        title: const Text(
-          'Ahmed Essamedeen',
-          style: TextStyle(
-            color: textLight,
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
+        shadowColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                primaryBg.withOpacity(0.1),
+                secondaryBg.withOpacity(0.1),
+              ],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+        ),
+        title: ShaderMask(
+          shaderCallback: (bounds) => LinearGradient(
+            colors: [accentColor, accentSecondary],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ).createShader(bounds),
+          child: const Text(
+            'Ahmed Essamedeen',
+            style: TextStyle(
+              color: textLight,
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
           ),
         ),
         actions: [
@@ -99,13 +122,20 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Text(
-                    'Ahmed Essamedeen',
-                    style: TextStyle(
-                      fontSize: 64,
-                      fontWeight: FontWeight.bold,
-                      color: textLight,
-                      height: 1.1,
+                  ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [accentColor, accentSecondary],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ).createShader(bounds),
+                    child: const Text(
+                      'Ahmed Essamedeen',
+                      style: TextStyle(
+                        fontSize: 64,
+                        fontWeight: FontWeight.bold,
+                        color: textLight,
+                        height: 1.1,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -223,22 +253,25 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
             // Tech Arsenal
             _buildSection(
               'Tech Stack',
-              Wrap(
-                spacing: 16,
-                runSpacing: 16,
+              GridView.count(
+                crossAxisCount: MediaQuery.of(context).size.width > 1200 ? 6 : (MediaQuery.of(context).size.width > 800 ? 4 : 3),
+                crossAxisSpacing: 20,
+                mainAxisSpacing: 20,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
                 children: [
-                  _buildTechBadge('Java'),
-                  _buildTechBadge('Android'),
-                  _buildTechBadge('Kotlin'),
-                  _buildTechBadge('iOS'),
-                  _buildTechBadge('Swift'),
-                  _buildTechBadge('AR/VR'),
-                  _buildTechBadge('Firebase'),
-                  _buildTechBadge('REST API'),
-                  _buildTechBadge('Mobile Architecture'),
-                  _buildTechBadge('Clean Code'),
-                  _buildTechBadge('MVVM'),
-                  _buildTechBadge('RxJava'),
+                  _buildTechIcon('Android', Icons.android),
+                  _buildTechIcon('iOS', Icons.apple),
+                  _buildTechIcon('Flutter', Icons.flutter_dash),
+                  _buildTechIcon('Java', Icons.code),
+                  _buildTechIcon('Kotlin', Icons.code),
+                  _buildTechIcon('Swift', Icons.code),
+                  _buildTechIcon('Firebase', Icons.cloud),
+                  _buildTechIcon('REST API', Icons.api),
+                  _buildTechIcon('SQLite', Icons.storage),
+                  _buildTechIcon('MVVM', Icons.architecture),
+                  _buildTechIcon('Clean Code', Icons.cleaning_services),
+                  _buildTechIcon('Git', Icons.commit),
                 ],
               ),
             ),
@@ -309,16 +342,23 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Text(
-                    '🚀 Let\'s Build Something Amazing',
-                    style: TextStyle(
-                      fontSize: 42,
-                      fontWeight: FontWeight.bold,
-                      color: textLight,
+                  ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: [accentColor, accentSecondary],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ).createShader(bounds),
+                    child: const Text(
+                      'Let\'s Build Something Amazing',
+                      style: TextStyle(
+                        fontSize: 48,
+                        fontWeight: FontWeight.bold,
+                        color: textLight,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'Ready for exciting opportunities, collaborations, and fresh challenges in mobile development',
                     style: TextStyle(
                       fontSize: 18,
@@ -359,12 +399,19 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: textLight,
+          ShaderMask(
+            shaderCallback: (bounds) => LinearGradient(
+              colors: [accentColor, accentSecondary],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ).createShader(bounds),
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: textLight,
+              ),
             ),
           ),
           const SizedBox(height: 40),
@@ -463,17 +510,12 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
     );
   }
 
-  Widget _buildProjectCard(
-    String title,
-    String description,
-    List<String> tags,
-  ) {
+  Widget _buildTechIcon(String name, IconData icon) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 24),
-      padding: const EdgeInsets.all(32),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: cardBg,
-        border: Border.all(color: borderColor),
+        border: Border.all(color: borderColor.withOpacity(0.5)),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -484,47 +526,148 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
         ],
       ),
       child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            size: 32,
+            color: accentColor,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            name,
+            style: const TextStyle(
+              fontSize: 12,
+              color: textGray,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProjectCard(
+    String title,
+    String description,
+    List<String> tags,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      decoration: BoxDecoration(
+        color: cardBg,
+        border: Border.all(color: borderColor.withOpacity(0.5)),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: textLight,
+          // Mockup image placeholder
+          Container(
+            height: 200,
+            decoration: BoxDecoration(
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              gradient: LinearGradient(
+                colors: [accentColor.withOpacity(0.2), accentSecondary.withOpacity(0.2)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: const Center(
+              child: Icon(
+                Icons.phone_android,
+                size: 60,
+                color: accentColor,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
-          Text(
-            description,
-            style: const TextStyle(
-              fontSize: 16,
-              color: textGray,
-              height: 1.6,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: tags
-                .map((tag) => Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: accentColor.withOpacity(0.1),
-                        border: Border.all(color: accentColor.withOpacity(0.3)),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        tag,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: accentColor,
-                          fontWeight: FontWeight.w600,
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: textLight,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  description,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: textGray,
+                    height: 1.6,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: tags
+                      .map((tag) => Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: accentColor.withOpacity(0.1),
+                              border: Border.all(color: accentColor.withOpacity(0.3)),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              tag,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: accentColor,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ))
+                      .toList(),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  children: [
+                    ElevatedButton(
+                      onPressed: () {},
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accentColor,
+                        foregroundColor: textLight,
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                    ))
-                .toList(),
+                      child: const Text('View Demo'),
+                    ),
+                    const SizedBox(width: 12),
+                    OutlinedButton(
+                      onPressed: () {},
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: accentColor.withOpacity(0.5)),
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'GitHub',
+                        style: TextStyle(color: accentColor),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ],
       ),
