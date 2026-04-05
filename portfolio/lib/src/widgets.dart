@@ -7,34 +7,62 @@ class TechStackShowcase extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final isMobile = width < 900;
+
     return Column(
       children: [
         Text(
           'Mobile Development Stack',
           style: TextStyle(
-            fontSize: 24,
+            fontSize: isMobile ? 20 : 24,
             fontWeight: FontWeight.bold,
             color: textLight,
           ),
         ),
         const SizedBox(height: 32),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            _buildStackItem('Android', 'Expert', ['Java', 'Kotlin', 'Firebase']),
-            _buildStackItem('iOS', 'Advanced', ['Swift', 'UIKit', 'Combine']),
-            _buildStackItem('Cross-Platform', 'Expert', ['Flutter', 'Firebase']),
-          ],
-        ),
+        isMobile
+            ? Column(
+                children: [
+                  _buildStackItem(
+                    'Android',
+                    'Expert',
+                    ['Java', 'Kotlin', 'Firebase'],
+                    isMobile: isMobile,
+                  ),
+                  const SizedBox(height: 18),
+                  _buildStackItem(
+                    'iOS',
+                    'Advanced',
+                    ['Swift', 'UIKit', 'Combine'],
+                    isMobile: isMobile,
+                  ),
+                  const SizedBox(height: 18),
+                  _buildStackItem(
+                    'Cross-Platform',
+                    'Expert',
+                    ['Flutter', 'Firebase'],
+                    isMobile: isMobile,
+                  ),
+                ],
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildStackItem('Android', 'Expert', ['Java', 'Kotlin', 'Firebase']),
+                  _buildStackItem('iOS', 'Advanced', ['Swift', 'UIKit', 'Combine']),
+                  _buildStackItem('Cross-Platform', 'Expert', ['Flutter', 'Firebase']),
+                ],
+              ),
       ],
     );
   }
 
-  Widget _buildStackItem(String platform, String level, List<String> tools) {
+  Widget _buildStackItem(String platform, String level, List<String> tools, {bool isMobile = false}) {
     return Expanded(
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 12),
-        padding: const EdgeInsets.all(24),
+        margin: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 12),
+        padding: EdgeInsets.all(isMobile ? 20 : 24),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
