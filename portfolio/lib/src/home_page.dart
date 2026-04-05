@@ -466,14 +466,14 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
                       const Icon(
                         Icons.business_center,
                         color: accentSecondary,
-                        size: 22,
+                        size: 24,
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 12),
                       Expanded(
                         child: Text(
                           company,
                           style: const TextStyle(
-                            fontSize: 20,
+                            fontSize: 18,
                             fontWeight: FontWeight.bold,
                             color: textLight,
                           ),
@@ -481,38 +481,19 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 12),
                   Text(
                     role,
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: accentSecondary,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 10),
                   Text(
                     period,
-                    style: const TextStyle(fontSize: 14, color: textGray),
-                  ),
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 6,
-                      horizontal: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: accentColor.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Text(
-                      'Tap to open',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: accentSecondary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    style: const TextStyle(fontSize: 13, color: textGray),
                   ),
                 ],
               ),
@@ -524,42 +505,35 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
   }
 
   Widget _buildCareerArrow() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 4),
-      child: Icon(Icons.arrow_forward_ios, color: accentColor, size: 16),
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        child: Icon(
+          Icons.arrow_forward_ios,
+          color: accentColor,
+          size: 18,
+        ),
+      ),
     );
   }
 
   Widget _buildTechIcon(String name, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: cardBg,
-        border: Border.all(color: borderColor.withOpacity(0.5)),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
+    return Tooltip(
+      message: name,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
             color: accentColor.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
           ),
-        ],
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 32, color: accentColor),
-          const SizedBox(height: 8),
-          Text(
-            name,
-            style: const TextStyle(
-              fontSize: 12,
-              color: textGray,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
+          padding: const EdgeInsets.all(16),
+          child: Icon(
+            icon,
+            size: 40,
+            color: accentColor,
           ),
-        ],
+        ),
       ),
     );
   }
