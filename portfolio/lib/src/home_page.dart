@@ -711,47 +711,47 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
     );
   }
 
+  static const _projects = [
+    (
+      'Retail Workforce Solutions',
+      'Enterprise platform for employee scheduling and task sync across retail chains.',
+      ['Android', 'Java', 'REST API', 'SQLite'],
+      Icons.store_rounded,
+    ),
+    (
+      'Media Streaming Platform',
+      'Full-featured media app with live streaming, content management and analytics.',
+      ['Android', 'Kotlin', 'Firebase'],
+      Icons.play_circle_rounded,
+    ),
+    (
+      'E-Commerce Mobile App',
+      'Complete shopping solution with payment gateway and real-time order tracking.',
+      ['Android', 'iOS', 'Flutter', 'Firebase'],
+      Icons.shopping_bag_rounded,
+    ),
+    (
+      'AR Product Visualization',
+      'Augmented reality experience for product visualization using ARCore.',
+      ['Android', 'ARCore', 'Java'],
+      Icons.view_in_ar_rounded,
+    ),
+  ];
+
   Widget _buildProjectsSection(BuildContext context, AppLocalizations l10n) {
     final isMobile = _isMobile;
-    final projects = [
-      (
-        'Retail Workforce Solutions',
-        'Enterprise platform for employee scheduling and task sync across retail chains.',
-        <String>['Android', 'Java', 'REST API', 'SQLite'],
-        Icons.store_rounded,
-      ),
-      (
-        'Media Streaming Platform',
-        'Full-featured media app with live streaming, content management and analytics.',
-        <String>['Android', 'Kotlin', 'Firebase'],
-        Icons.play_circle_rounded,
-      ),
-      (
-        'E-Commerce Mobile App',
-        'Complete shopping solution with payment gateway and real-time order tracking.',
-        <String>['Android', 'iOS', 'Flutter', 'Firebase'],
-        Icons.shopping_bag_rounded,
-      ),
-      (
-        'AR Product Visualization',
-        'Augmented reality experience for product visualization using ARCore.',
-        <String>['Android', 'ARCore', 'Java'],
-        Icons.view_in_ar_rounded,
-      ),
-    ];
 
-    Widget card(int i) {
-      final p = projects[i];
+    Widget mobileCard(int i) {
+      final p = _projects[i];
       return ScrollReveal(
         scrollController: _scrollController,
-        delay: Duration(milliseconds: (i % 2) * 120),
+        delay: Duration(milliseconds: i * 80),
         child: Padding(
-          padding: const EdgeInsets.only(bottom: 20),
-          child: _buildProjectCard(
-            title: p.$1,
-            description: p.$2,
-            tags: p.$3,
-            icon: p.$4,
+          padding: const EdgeInsets.only(bottom: 16),
+          child: GlassCard(
+            padding: EdgeInsets.zero,
+            glowOnHover: true,
+            child: _buildMobileProjectContent(p.$1, p.$2, p.$3, p.$4),
           ),
         ),
       );
@@ -761,106 +761,90 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
       context,
       l10n.projectsTitle,
       isMobile
-          ? Column(children: List.generate(projects.length, card))
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(child: Column(children: [card(0), card(2)])),
-                const SizedBox(width: 20),
-                Expanded(child: Column(children: [card(1), card(3)])),
-              ],
+          ? Column(children: List.generate(_projects.length, mobileCard))
+          : ScrollReveal(
+              scrollController: _scrollController,
+              child: _PhoneShowcase(projects: _projects),
             ),
       key: _projectsKey,
     );
   }
 
-  Widget _buildProjectCard({
-    required String title,
-    required String description,
-    required List<String> tags,
-    required IconData icon,
-  }) {
-    return GlassCard(
-      padding: EdgeInsets.zero,
-      glowOnHover: true,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: 130,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  accentColor.withOpacity(0.3),
-                  accentSecondary.withOpacity(0.15),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Center(
-              child: Icon(icon, size: 52, color: accentSecondary),
+  Widget _buildMobileProjectContent(
+    String title,
+    String description,
+    List<String> tags,
+    IconData icon,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          height: 110,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                accentColor.withOpacity(0.3),
+                accentSecondary.withOpacity(0.15),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                    color: textLight,
-                  ),
+          child: Center(child: Icon(icon, size: 44, color: accentSecondary)),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: textLight,
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  description,
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: textGray,
-                    height: 1.5,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 14),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: tags
-                      .map(
-                        (tag) => Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: accentColor.withOpacity(0.1),
-                            border: Border.all(
-                              color: accentColor.withOpacity(0.3),
-                            ),
-                            borderRadius: BorderRadius.circular(100),
-                          ),
-                          child: Text(
-                            tag,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: accentColor,
-                              fontWeight: FontWeight.w500,
-                            ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                description,
+                style: const TextStyle(fontSize: 12, color: textGray, height: 1.5),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: tags
+                    .map(
+                      (tag) => Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: accentColor.withOpacity(0.1),
+                          border: Border.all(color: accentColor.withOpacity(0.3)),
+                          borderRadius: BorderRadius.circular(100),
+                        ),
+                        child: Text(
+                          tag,
+                          style: const TextStyle(
+                            fontSize: 10,
+                            color: accentColor,
+                            fontWeight: FontWeight.w500,
                           ),
                         ),
-                      )
-                      .toList(),
-                ),
-              ],
-            ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -946,6 +930,346 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
           child,
         ],
       ),
+    );
+  }
+}
+
+class _PhoneShowcase extends StatefulWidget {
+  final List<(String, String, List<String>, IconData)> projects;
+
+  const _PhoneShowcase({required this.projects});
+
+  @override
+  State<_PhoneShowcase> createState() => _PhoneShowcaseState();
+}
+
+class _PhoneShowcaseState extends State<_PhoneShowcase>
+    with SingleTickerProviderStateMixin {
+  int _selected = 0;
+  bool _switching = false;
+  late AnimationController _ctrl;
+  late Animation<double> _fade;
+  late Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fade = Tween<double>(begin: 1.0, end: 0.0).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeIn),
+    );
+    _scale = Tween<double>(begin: 1.0, end: 0.94).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeIn),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _switchTo(int index) async {
+    if (_switching || index == _selected) return;
+    _switching = true;
+    await _ctrl.forward();
+    setState(() => _selected = index);
+    await _ctrl.reverse();
+    _switching = false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        _buildPhone(),
+        const SizedBox(width: 52),
+        Expanded(child: _buildSelector()),
+      ],
+    );
+  }
+
+  Widget _buildPhone() {
+    final p = widget.projects[_selected];
+    return Container(
+      width: 264,
+      height: 540,
+      decoration: BoxDecoration(
+        color: const Color(0xFF0C0818),
+        borderRadius: BorderRadius.circular(44),
+        border: Border.all(color: borderColor, width: 2.5),
+        boxShadow: [
+          BoxShadow(
+            color: accentColor.withOpacity(0.35),
+            blurRadius: 50,
+            spreadRadius: 5,
+          ),
+          BoxShadow(
+            color: accentSecondary.withOpacity(0.1),
+            blurRadius: 80,
+            spreadRadius: 10,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          // Notch bar
+          Padding(
+            padding: const EdgeInsets.only(top: 18, bottom: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: borderColor.withOpacity(0.4),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  width: 72,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    color: borderColor.withOpacity(0.25),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  width: 10,
+                  height: 10,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: borderColor.withOpacity(0.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Screen content
+          Expanded(
+            child: AnimatedBuilder(
+              animation: _ctrl,
+              builder: (context, child) => Opacity(
+                opacity: _fade.value,
+                child: Transform.scale(scale: _scale.value, child: child),
+              ),
+              child: _buildScreen(p),
+            ),
+          ),
+          // Home indicator
+          Padding(
+            padding: const EdgeInsets.only(bottom: 14),
+            child: Container(
+              width: 100,
+              height: 4,
+              decoration: BoxDecoration(
+                color: borderColor.withOpacity(0.45),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScreen((String, String, List<String>, IconData) p) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 22),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // App icon
+          Container(
+            width: 68,
+            height: 68,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [accentColor, accentSecondary],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: accentColor.withOpacity(0.45),
+                  blurRadius: 20,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Icon(p.$4, color: Colors.white, size: 34),
+          ),
+          const SizedBox(height: 22),
+          Text(
+            p.$1,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: textLight,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            p.$2,
+            style: const TextStyle(fontSize: 12, color: textGray, height: 1.55),
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 20),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: p.$3
+                .map(
+                  (tag) => Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: accentColor.withOpacity(0.15),
+                      borderRadius: BorderRadius.circular(100),
+                      border: Border.all(color: accentColor.withOpacity(0.35)),
+                    ),
+                    child: Text(
+                      tag,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: accentColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                )
+                .toList(),
+          ),
+          const SizedBox(height: 28),
+          // Progress dots
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(widget.projects.length, (i) {
+              final active = i == _selected;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                width: active ? 22 : 6,
+                height: 6,
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                decoration: BoxDecoration(
+                  gradient: active
+                      ? const LinearGradient(colors: [accentColor, accentSecondary])
+                      : null,
+                  color: active ? null : borderColor.withOpacity(0.35),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(widget.projects.length, (i) {
+        final p = widget.projects[i];
+        final isActive = i == _selected;
+        return GestureDetector(
+          onTap: () => _switchTo(i),
+          child: MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                color: isActive
+                    ? accentColor.withOpacity(0.12)
+                    : cardBg.withOpacity(0.4),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isActive
+                      ? accentColor.withOpacity(0.55)
+                      : borderColor.withOpacity(0.2),
+                ),
+                boxShadow: isActive
+                    ? [
+                        BoxShadow(
+                          color: accentColor.withOpacity(0.18),
+                          blurRadius: 20,
+                          offset: const Offset(0, 4),
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Row(
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    width: 46,
+                    height: 46,
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? accentColor.withOpacity(0.2)
+                          : borderColor.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(13),
+                    ),
+                    child: Icon(
+                      p.$4,
+                      color: isActive ? accentSecondary : textGray,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          p.$1,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: isActive ? FontWeight.w600 : FontWeight.w400,
+                            color: isActive ? textLight : textGray,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          p.$3.take(3).join(' · '),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: isActive
+                                ? accentColor
+                                : textGray.withOpacity(0.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  AnimatedOpacity(
+                    duration: const Duration(milliseconds: 250),
+                    opacity: isActive ? 1.0 : 0.0,
+                    child: const Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: accentSecondary,
+                      size: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }),
     );
   }
 }
