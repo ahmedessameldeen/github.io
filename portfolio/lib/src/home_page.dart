@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -18,982 +19,822 @@ class PortfolioHomePage extends StatefulWidget {
 class _PortfolioHomePageState extends State<PortfolioHomePage> {
   final ScrollController _scrollController = ScrollController();
   final GlobalKey _heroKey = GlobalKey();
-  final GlobalKey _aboutKey = GlobalKey();
+  final GlobalKey _journeyKey = GlobalKey();
   final GlobalKey _projectsKey = GlobalKey();
   final GlobalKey _skillsKey = GlobalKey();
   final GlobalKey _contactKey = GlobalKey();
-  int _selectedIndex = 0;
+  int _activeNavIndex = 0;
+  bool _isScrolled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
 
   @override
   void dispose() {
+    _scrollController.removeListener(_onScroll);
     _scrollController.dispose();
     super.dispose();
   }
 
-  void _scrollToSection(GlobalKey key) {
-    final context = key.currentContext;
-    if (context != null) {
-      Scrollable.ensureVisible(
-        context,
-        duration: const Duration(milliseconds: 800),
-        curve: Curves.easeInOut,
-      );
+  void _onScroll() {
+    if (!mounted) return;
+    final scrolled = _scrollController.offset > 20;
+    if (scrolled != _isScrolled) setState(() => _isScrolled = scrolled);
+
+    final keys = [_heroKey, _journeyKey, _skillsKey, _projectsKey, _contactKey];
+    for (int i = keys.length - 1; i >= 0; i--) {
+      final ctx = keys[i].currentContext;
+      if (ctx == null) continue;
+      final box = ctx.findRenderObject() as RenderBox?;
+      if (box == null) continue;
+      final pos = box.localToGlobal(Offset.zero);
+      if (pos.dy <= kNavBarHeight + 40) {
+        if (_activeNavIndex != i) setState(() => _activeNavIndex = i);
+        return;
+      }
     }
+    if (_activeNavIndex != 0) setState(() => _activeNavIndex = 0);
   }
 
-  bool _isMobile(BuildContext context) {
-    return MediaQuery.of(context).size.width < 900;
+  void _scrollToSection(GlobalKey key) {
+    final ctx = key.currentContext;
+    if (ctx == null) return;
+    final box = ctx.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final targetY = box.localToGlobal(Offset.zero).dy +
+        _scrollController.offset -
+        kNavBarHeight;
+    _scrollController.animateTo(
+      targetY.clamp(0.0, _scrollController.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.easeInOut,
+    );
   }
 
-  bool _isMobileAppStyle(BuildContext context) {
-    return MediaQuery.of(context).size.width < 700;
+  bool get _isMobile => MediaQuery.of(context).size.width < kBreakpointMobile;
+
+  double get _hPad =>
+      _isMobile ? kSectionHorizontalPaddingMobile : kSectionHorizontalPadding;
+
+  @override
+  Widget build(BuildContext context) {
+    final lp = Provider.of<LanguageProvider>(context);
+    final l10n = AppLocalizations.of(context)!;
+
+    return Directionality(
+      textDirection: lp.isRTL ? TextDirection.rtl : TextDirection.ltr,
+      child: Scaffold(
+        backgroundColor: primaryBg,
+        extendBodyBehindAppBar: true,
+        appBar: _buildAppBar(context, l10n),
+        body: Stack(
+          children: [
+            IgnorePointer(
+              child: Stack(
+                children: [
+                  Positioned(
+                    top: -150,
+                    left: -100,
+                    child: _buildOrb(accentColor, 500),
+                  ),
+                  Positioned(
+                    top: 400,
+                    right: -150,
+                    child: _buildOrb(accentSecondary, 400),
+                  ),
+                  Positioned(
+                    top: 900,
+                    left: -80,
+                    child: _buildOrb(accentColor, 350),
+                  ),
+                ],
+              ),
+            ),
+            SingleChildScrollView(
+              controller: _scrollController,
+              child: Column(
+                children: [
+                  _buildHeroSection(context, l10n),
+                  _buildJourneySection(context, l10n),
+                  _buildSkillsSection(context, l10n),
+                  _buildProjectsSection(context, l10n),
+                  _buildContactSection(context, l10n),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  double _sectionHorizontalPadding(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    if (width < 600) return 20;
-    if (width < 1000) return 30;
-    return 40;
+  Widget _buildOrb(Color color, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: RadialGradient(
+          colors: [
+            color.withOpacity(0.15),
+            color.withOpacity(0.05),
+            Colors.transparent,
+          ],
+        ),
+      ),
+    );
   }
 
-  void _showMobileNavMenu(BuildContext context) {
+  PreferredSizeWidget _buildAppBar(BuildContext context, AppLocalizations l10n) {
+    final isMobile = _isMobile;
+    final navLabels = [
+      l10n.navHome,
+      l10n.navJourney,
+      l10n.navSkills,
+      l10n.navProjects,
+      l10n.navContact,
+    ];
+    final navKeys = [_heroKey, _journeyKey, _skillsKey, _projectsKey, _contactKey];
+
+    return PreferredSize(
+      preferredSize: const Size.fromHeight(kNavBarHeight),
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            height: kNavBarHeight,
+            decoration: BoxDecoration(
+              color: primaryBg.withOpacity(_isScrolled ? 0.7 : 0.0),
+              border: Border(
+                bottom: BorderSide(
+                  color: borderColor.withOpacity(_isScrolled ? 0.3 : 0.0),
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: _hPad),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => _scrollToSection(_heroKey),
+                    child: const GradientText(
+                      'AE.',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                  if (!isMobile)
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ...List.generate(
+                          navLabels.length,
+                          (i) => _NavItem(
+                            label: navLabels[i],
+                            isActive: _activeNavIndex == i,
+                            onTap: () => _scrollToSection(navKeys[i]),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        const LanguageSwitch(),
+                      ],
+                    )
+                  else
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const LanguageSwitch(),
+                        IconButton(
+                          icon: const Icon(Icons.menu_rounded, color: textLight),
+                          onPressed: () =>
+                              _showMobileMenu(context, navLabels, navKeys),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showMobileMenu(
+    BuildContext context,
+    List<String> labels,
+    List<GlobalKey> keys,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: cardBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Navigate',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: textLight,
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: borderColor.withOpacity(0.6),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
-              const SizedBox(height: 20),
-              _buildMobileNavTile(
-                AppLocalizations.of(context)!.navHome,
-                _heroKey,
-                context,
+              const SizedBox(height: 24),
+              ...List.generate(
+                labels.length,
+                (i) => ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(
+                    labels[i],
+                    style: const TextStyle(color: textLight, fontSize: 16),
+                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded, color: accentColor),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _scrollToSection(keys[i]);
+                  },
+                ),
               ),
-              _buildMobileNavTile(
-                AppLocalizations.of(context)!.navJourney,
-                _aboutKey,
-                context,
-              ),
-              _buildMobileNavTile(
-                AppLocalizations.of(context)!.navProjects,
-                _projectsKey,
-                context,
-              ),
-              _buildMobileNavTile(
-                AppLocalizations.of(context)!.navSkills,
-                _skillsKey,
-                context,
-              ),
-              _buildMobileNavTile(
-                AppLocalizations.of(context)!.navContact,
-                _contactKey,
-                context,
-              ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 8),
               const LanguageSwitch(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
             ],
           ),
-        );
-      },
-    );
-  }
-
-  Widget _buildMobileNavTile(String label, GlobalKey key, BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text(
-        label,
-        style: const TextStyle(color: textLight, fontSize: 16),
-      ),
-      trailing: const Icon(Icons.chevron_right, color: accentColor),
-      onTap: () {
-        Navigator.of(context).pop();
-        _scrollToSection(key);
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final languageProvider = Provider.of<LanguageProvider>(context);
-    final isMobileAppStyle = _isMobileAppStyle(context);
-
-    return Directionality(
-      textDirection: languageProvider.isRTL
-          ? TextDirection.rtl
-          : TextDirection.ltr,
-      child: Scaffold(
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-          backgroundColor: primaryBg.withOpacity(0.8),
-          elevation: 0,
-          shadowColor: Colors.transparent,
-          surfaceTintColor: Colors.transparent,
-          flexibleSpace: Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  primaryBg.withOpacity(0.1),
-                  secondaryBg.withOpacity(0.1),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-          title: ShaderMask(
-            shaderCallback: (bounds) => LinearGradient(
-              colors: [accentColor, accentSecondary],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ).createShader(bounds),
-            child: const Text(
-              'Ahmed Essam',
-              style: TextStyle(
-                color: textLight,
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
-            ),
-          ),
-          actions: _isMobile(context)
-              ? [
-                  IconButton(
-                    icon: const Icon(Icons.menu, color: Colors.white),
-                    onPressed: () => _showMobileNavMenu(context),
-                  ),
-                ]
-              : [
-                  _buildNavItem(AppLocalizations.of(context)!.navHome, _heroKey),
-                  _buildNavItem(AppLocalizations.of(context)!.navJourney, _aboutKey),
-                  _buildNavItem(
-                    AppLocalizations.of(context)!.navProjects,
-                    _projectsKey,
-                  ),
-                  _buildNavItem(AppLocalizations.of(context)!.navSkills, _skillsKey),
-                  _buildNavItem(
-                    AppLocalizations.of(context)!.navContact,
-                    _contactKey,
-                  ),
-                  const LanguageSwitch(),
-                  const SizedBox(width: 20),
-                ],
         ),
-        body: isMobileAppStyle
-            ? _buildMobileAppShell(
-                context,
-                SingleChildScrollView(
-                  controller: _scrollController,
-                  child: Column(
-                    children: [
-                      _buildHeroSection(context),
-                      _buildJourneySection(context),
-                      _buildStackShowcaseSection(context),
-                      _buildSkillsSection(context),
-                      _buildProjectsSection(context),
-                      _buildContactSection(context),
-                    ],
-                  ),
-                ),
-              )
-            : SingleChildScrollView(
-                controller: _scrollController,
-                child: Column(
-                  children: [
-                    _buildHeroSection(context),
-                    _buildJourneySection(context),
-                    _buildStackShowcaseSection(context),
-                    _buildSkillsSection(context),
-                    _buildProjectsSection(context),
-                    _buildContactSection(context),
-                  ],
-                ),
-              ),
-        bottomNavigationBar: isMobileAppStyle
-            ? BottomNavigationBar(
-                currentIndex: _selectedIndex,
-                onTap: _handleMobileTabTap,
-                selectedItemColor: accentColor,
-                unselectedItemColor: textGray,
-                showUnselectedLabels: false,
-                showSelectedLabels: true,
-                type: BottomNavigationBarType.fixed,
-                backgroundColor: primaryBg,
-                items: [
-                  BottomNavigationBarItem(
-                    icon: const Icon(Icons.home),
-                    label: AppLocalizations.of(context)!.navHome,
-                  ),
-                  BottomNavigationBarItem(
-                    icon: const Icon(Icons.timeline),
-                    label: AppLocalizations.of(context)!.navJourney,
-                  ),
-                  BottomNavigationBarItem(
-                    icon: const Icon(Icons.phone_android),
-                    label: AppLocalizations.of(context)!.navProjects,
-                  ),
-                  BottomNavigationBarItem(
-                    icon: const Icon(Icons.star),
-                    label: AppLocalizations.of(context)!.navSkills,
-                  ),
-                  BottomNavigationBarItem(
-                    icon: const Icon(Icons.mail),
-                    label: AppLocalizations.of(context)!.navContact,
-                  ),
-                ],
-              )
-            : null,
       ),
     );
   }
 
-  Widget _buildHeroSection(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final isMobile = width < 800;
-
+  Widget _buildHeroSection(BuildContext context, AppLocalizations l10n) {
+    final isMobile = _isMobile;
     return Container(
       key: _heroKey,
-      padding: EdgeInsets.symmetric(
-        vertical: isMobile ? 80 : 120,
-        horizontal: _sectionHorizontalPadding(context),
+      constraints: BoxConstraints(
+        minHeight: MediaQuery.of(context).size.height,
       ),
-      child: FadeInUp(
+      padding: EdgeInsets.symmetric(
+        horizontal: _hPad,
+        vertical: kNavBarHeight + 20,
+      ),
+      child: Center(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            ShaderMask(
-              shaderCallback: (bounds) => LinearGradient(
-                colors: [accentColor, accentSecondary],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ).createShader(bounds),
-              child: Text(
-                AppLocalizations.of(context)!.heroName,
-                style: TextStyle(
-                  fontSize: isMobile ? 42 : 64,
-                  fontWeight: FontWeight.bold,
-                  color: textLight,
-                  height: 1.1,
-                ),
-                textAlign: TextAlign.center,
+            FadeInUp(
+              child: Column(
+                children: [
+                  Container(
+                    width: 110,
+                    height: 110,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [accentColor, accentSecondary],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: accentColor.withOpacity(0.5),
+                          blurRadius: 30,
+                          spreadRadius: 4,
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(3),
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: primaryBg,
+                        ),
+                        child: const Center(
+                          child: Text(
+                            'AE',
+                            style: TextStyle(
+                              color: textLight,
+                              fontSize: 30,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  GradientText(
+                    l10n.heroName,
+                    style: TextStyle(
+                      fontSize: isMobile ? 42 : 68,
+                      fontWeight: FontWeight.w800,
+                      height: 1.1,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accentColor.withOpacity(0.12),
+                      border: Border.all(color: accentColor.withOpacity(0.4)),
+                      borderRadius: BorderRadius.circular(30),
+                    ),
+                    child: Text(
+                      l10n.heroTitle,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: accentSecondary,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 18,
-                vertical: 10,
-              ),
-              decoration: BoxDecoration(
-                color: accentColor.withOpacity(0.1),
-                border: Border.all(color: accentColor.withOpacity(0.3)),
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: Text(
-                '🚀 ${AppLocalizations.of(context)!.heroTitle}',
-                style: TextStyle(
-                  fontSize: isMobile ? 16 : 20,
-                  color: accentColor,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              AppLocalizations.of(context)!.heroDescription,
-              style: TextStyle(
-                fontSize: isMobile ? 16 : 20,
-                color: textGray,
-                height: 1.6,
-              ),
-              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 40),
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 16,
-              runSpacing: 12,
-              children: [
-                ElevatedButton(
-                  onPressed: () => _scrollToSection(_projectsKey),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accentColor,
-                    foregroundColor: primaryBg,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isMobile ? 28 : 40,
-                      vertical: 16,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 8,
-                    shadowColor: accentColor.withOpacity(0.3),
-                  ),
-                  child: Text(
-                    AppLocalizations.of(context)!.heroCta,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-                OutlinedButton(
-                  onPressed: () => _scrollToSection(_contactKey),
-                  style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: accentColor),
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isMobile ? 28 : 40,
-                      vertical: 16,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    AppLocalizations.of(context)!.heroContact,
-                    style: TextStyle(
-                      color: accentColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStackShowcaseSection(BuildContext context) {
-    return _buildSection(
-      context,
-      'Development Stack',
-      FadeInUp(
-        child: const TechStackShowcase(),
-      ),
-    );
-  }
-
-  Widget _buildJourneySection(BuildContext context) {
-    final isMobile = _isMobile(context);
-    final journeyItems = [
-      _buildCareerStep(
-        AppLocalizations.of(context)!.companyMagdsoft,
-        AppLocalizations.of(context)!.jobAndroidDeveloper,
-        AppLocalizations.of(context)!.period2016_2017,
-        'https://www.magdsoft.com/teamwork',
-        isMobile: isMobile,
-      ),
-      _buildCareerStep(
-        AppLocalizations.of(context)!.companyCode95,
-        AppLocalizations.of(context)!.jobMobileDeveloper,
-        AppLocalizations.of(context)!.period2017_2019,
-        'https://code95.com/',
-        isMobile: isMobile,
-      ),
-      _buildCareerStep(
-        AppLocalizations.of(context)!.companyArgaam,
-        AppLocalizations.of(context)!.jobMobileDeveloper,
-        AppLocalizations.of(context)!.period2019_2020,
-        'https://www.media.argaam.com/',
-        isMobile: isMobile,
-      ),
-      _buildCareerStep(
-        AppLocalizations.of(context)!.companySamesystem,
-        AppLocalizations.of(context)!.jobSeniorAndroidDeveloper,
-        AppLocalizations.of(context)!.period2020_present,
-        'https://www.samesystem.com/',
-        isMobile: isMobile,
-      ),
-    ];
-
-    return _buildSection(
-      context,
-      AppLocalizations.of(context)!.journeyTitle,
-      isMobile
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: List.generate(
-                journeyItems.length * 2 - 1,
-                (index) {
-                  if (index.isOdd) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Center(
-                        child: Icon(
-                          Icons.arrow_downward,
-                          color: accentColor,
-                          size: 20,
-                        ),
-                      ),
-                    );
-                  }
-                  return journeyItems[index ~/ 2];
-                },
-              ),
-            )
-          : SizedBox(
-              width: double.infinity,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    journeyItems[0],
-                    _buildCareerArrow(),
-                    journeyItems[1],
-                    _buildCareerArrow(),
-                    journeyItems[2],
-                    _buildCareerArrow(),
-                    journeyItems[3],
-                  ],
-                ),
-              ),
-            ),
-      key: _aboutKey,
-    );
-  }
-
-  Widget _buildSkillsSection(BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
-    final itemSize = width < 600 ? 76.0 : 88.0;
-    return _buildSection(
-      context,
-      AppLocalizations.of(context)!.skillsTitle,
-      Center(
-        child: Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 18,
-          runSpacing: 18,
-          children: [
-            _buildTechIcon('Android', Icons.android, size: itemSize),
-            _buildTechIcon('iOS', Icons.apple, size: itemSize),
-            _buildTechIcon('Flutter', Icons.flutter_dash, size: itemSize),
-            _buildTechIcon('Java', Icons.code, size: itemSize),
-            _buildTechIcon('Kotlin', Icons.code, size: itemSize),
-            _buildTechIcon('Swift', Icons.code, size: itemSize),
-            _buildTechIcon('Firebase', Icons.cloud, size: itemSize),
-            _buildTechIcon('REST API', Icons.api, size: itemSize),
-            _buildTechIcon('SQLite', Icons.storage, size: itemSize),
-            _buildTechIcon('MVVM', Icons.architecture, size: itemSize),
-            _buildTechIcon('Clean Code', Icons.cleaning_services, size: itemSize),
-            _buildTechIcon('Git', Icons.commit, size: itemSize),
-          ],
-        ),
-      ),
-      key: _skillsKey,
-    );
-  }
-
-  Widget _buildProjectsSection(BuildContext context) {
-    return _buildSection(
-      context,
-      AppLocalizations.of(context)!.projectsTitle,
-      FadeInUp(
-        child: GridView.count(
-          crossAxisCount: MediaQuery.of(context).size.width > 1200
-              ? 3
-              : (MediaQuery.of(context).size.width > 800 ? 2 : 1),
-          crossAxisSpacing: 20,
-          mainAxisSpacing: 20,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          children: [
-            _buildProjectCard(
-              'Retail Workforce Solutions',
-              'Enterprise platform for retail management with real-time employee scheduling '
-                  'and task synchronization across multiple stores.',
-              ['Android', 'Java', 'REST API', 'SQLite'],
-            ),
-            _buildProjectCard(
-              'Media Streaming Platform',
-              'Full-featured media distribution platform with live streaming, '
-                  'content management, and user analytics.',
-              ['Android', 'Kotlin', 'Firebase', 'Real-time Sync'],
-            ),
-            _buildProjectCard(
-              'E-Commerce Mobile App',
-              'Complete e-commerce solution with payment gateway integration, '
-                  'product catalog, and order tracking.',
-              ['Android', 'iOS', 'Payment Gateway', 'Analytics'],
-            ),
-            _buildProjectCard(
-              'AR Product Visualization',
-              'Augmented reality features for product visualization and virtual try-on experiences.',
-              ['Android', 'ARCore', 'AR', 'Java'],
-            ),
-          ],
-        ),
-      ),
-      key: _projectsKey,
-    );
-  }
-
-  Widget _buildContactSection(BuildContext context) {
-    final isMobile = _isMobile(context);
-    return Container(
-      key: _contactKey,
-      padding: EdgeInsets.symmetric(
-        vertical: isMobile ? 60 : 100,
-        horizontal: _sectionHorizontalPadding(context),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          ShaderMask(
-            shaderCallback: (bounds) => LinearGradient(
-              colors: [accentColor, accentSecondary],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ).createShader(bounds),
-            child: Text(
-              AppLocalizations.of(context)!.contactTitle,
-              style: TextStyle(
-                fontSize: isMobile ? 36 : 48,
-                fontWeight: FontWeight.bold,
-                color: textLight,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            'Ready for exciting opportunities, collaborations, and fresh challenges in mobile development',
-            style: TextStyle(fontSize: isMobile ? 16 : 18, color: textGray),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 40),
-          Flex(
-            direction: isMobile ? Axis.vertical : Axis.horizontal,
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: isMobile ? double.infinity : 400,
-                child: _buildContactForm(),
-              ),
-              SizedBox(width: isMobile ? 0 : 60, height: isMobile ? 30 : 0),
-              SizedBox(
-                width: isMobile ? double.infinity : 320,
-                child: _buildContactInfo(),
-              ),
-            ],
-          ),
-          const SizedBox(height: 40),
-          Text(
-            AppLocalizations.of(context)!.footerCopyright,
-            style: const TextStyle(color: textGray, fontSize: 14),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSection(BuildContext context, String title, Widget child, {GlobalKey? key}) {
-    final isMobile = _isMobile(context);
-    return Container(
-      key: key,
-      width: double.infinity,
-      padding: EdgeInsets.symmetric(
-        vertical: 80,
-        horizontal: _sectionHorizontalPadding(context),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ShaderMask(
-            shaderCallback: (bounds) => LinearGradient(
-              colors: [accentColor, accentSecondary],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ).createShader(bounds),
-            child: Text(
-              title,
-              style: TextStyle(
-                fontSize: isMobile ? 32 : 48,
-                fontWeight: FontWeight.bold,
-                color: textLight,
-              ),
-            ),
-          ),
-          const SizedBox(height: 40),
-          child,
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCareerStep(
-    String company,
-    String role,
-    String period,
-    String url, {
-    bool isMobile = false,
-  }) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: Container(
-        width: isMobile ? double.infinity : 300,
-        margin: EdgeInsets.symmetric(horizontal: isMobile ? 0 : 8, vertical: isMobile ? 8 : 0),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: BorderRadius.circular(18),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(18),
-            hoverColor: accentColor.withOpacity(0.13),
-            onTap: () => launchUrl(Uri.parse(url)),
-            child: Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: cardBg,
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: accentColor.withOpacity(0.4)),
-                boxShadow: [
-                  BoxShadow(
-                    color: accentColor.withOpacity(0.15),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-                gradient: LinearGradient(
-                  colors: [cardBg.withOpacity(0.95), cardBg],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            FadeInUp(
+              delay: const Duration(milliseconds: 200),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 24,
+                runSpacing: 8,
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.business_center,
-                        color: accentSecondary,
-                        size: 24,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          company,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: textLight,
-                          ),
-                        ),
-                      ),
-                    ],
+                  _buildStatItem('9+', 'Years Exp.'),
+                  _buildStatDivider(),
+                  _buildStatItem('Android · iOS · Flutter', 'Platforms'),
+                  _buildStatDivider(),
+                  _buildStatItem('Enterprise', 'Focus'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 48),
+            FadeInUp(
+              delay: const Duration(milliseconds: 400),
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                spacing: 16,
+                runSpacing: 12,
+                children: [
+                  HoverScaleButton(
+                    onTap: () => _scrollToSection(_projectsKey),
+                    child: _buildPrimaryButton(l10n.heroCta),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    role,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: accentSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    period,
-                    style: const TextStyle(fontSize: 13, color: textGray),
+                  HoverScaleButton(
+                    onTap: () => _scrollToSection(_contactKey),
+                    child: _buildOutlineButton(l10n.heroContact),
                   ),
                 ],
               ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildCareerArrow() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Icon(
-          Icons.arrow_forward_ios,
-          color: accentColor,
-          size: 18,
+  Widget _buildStatItem(String value, String label) {
+    return Column(
+      children: [
+        GradientText(
+          value,
+          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          textAlign: TextAlign.center,
         ),
-      ),
+        const SizedBox(height: 4),
+        Text(label, style: const TextStyle(fontSize: 12, color: textGray)),
+      ],
     );
   }
 
-  Widget _buildMobileAppShell(BuildContext context, Widget child) {
-    return SafeArea(
-      child: Container(
-        color: primaryBg,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        child: Center(
-          child: Container(
-            constraints: const BoxConstraints(maxWidth: 520),
-            decoration: BoxDecoration(
-              color: secondaryBg,
-              borderRadius: BorderRadius.circular(32),
-              border: Border.all(color: borderColor.withOpacity(0.7), width: 1.5),
-              boxShadow: [
-                BoxShadow(
-                  color: accentColor.withOpacity(0.18),
-                  blurRadius: 30,
-                  offset: const Offset(0, 18),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Container(
-                  margin: const EdgeInsets.only(top: 16, bottom: 8),
-                  width: 72,
-                  height: 6,
-                  decoration: BoxDecoration(
-                    color: accentColor.withOpacity(0.4),
-                    borderRadius: BorderRadius.circular(3),
-                  ),
-                ),
-                Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  decoration: BoxDecoration(
-                    color: primaryBg.withOpacity(0.9),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        AppLocalizations.of(context)!.heroTitle,
-                        style: const TextStyle(
-                          color: textLight,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Icon(Icons.signal_cellular_alt, color: accentColor, size: 18),
-                          const SizedBox(width: 8),
-                          Icon(Icons.wifi, color: accentColor, size: 18),
-                          const SizedBox(width: 8),
-                          Text(
-                            '100%',
-                            style: const TextStyle(color: textLight, fontSize: 14),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(child: child),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTechIcon(String name, IconData icon, {double size = 40.0}) {
-    return Tooltip(
-      message: name,
-      child: MouseRegion(
-        cursor: SystemMouseCursors.click,
-        child: Container(
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: accentColor.withOpacity(0.1),
-          ),
-          padding: EdgeInsets.all(size * 0.4),
-          child: Icon(
-            icon,
-            size: size,
-            color: accentColor,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProjectCard(
-    String title,
-    String description,
-    List<String> tags,
-  ) {
+  Widget _buildStatDivider() {
     return Container(
-      margin: const EdgeInsets.only(bottom: 24),
+      width: 1,
+      height: 36,
+      color: borderColor.withOpacity(0.5),
+    );
+  }
+
+  Widget _buildPrimaryButton(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 16),
       decoration: BoxDecoration(
-        color: cardBg,
-        border: Border.all(color: borderColor.withOpacity(0.5)),
-        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          colors: [accentColor, accentSecondary],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: accentColor.withOpacity(0.1),
+            color: accentColor.withOpacity(0.4),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
         ],
       ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOutlineButton(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 36, vertical: 15),
+      decoration: BoxDecoration(
+        border: Border.all(color: accentColor, width: 1.5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: accentSecondary,
+          fontWeight: FontWeight.bold,
+          fontSize: 16,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildJourneySection(BuildContext context, AppLocalizations l10n) {
+    final entries = [
+      (l10n.companyMagdsoft, l10n.jobAndroidDeveloper, l10n.period2016_2017, false),
+      (l10n.companyCode95, l10n.jobMobileDeveloper, l10n.period2017_2019, false),
+      (l10n.companyArgaam, l10n.jobMobileDeveloper, l10n.period2019_2020, false),
+      (
+        l10n.companySamesystem,
+        l10n.jobSeniorAndroidDeveloper,
+        l10n.period2020_present,
+        true,
+      ),
+    ];
+
+    return _buildSection(
+      context,
+      l10n.journeyTitle,
+      Column(
+        children: List.generate(entries.length, (i) {
+          final e = entries[i];
+          return ScrollReveal(
+            scrollController: _scrollController,
+            delay: Duration(milliseconds: i * 150),
+            child: _buildTimelineItem(
+              company: e.$1,
+              role: e.$2,
+              period: e.$3,
+              isCurrent: e.$4,
+              isLast: i == entries.length - 1,
+            ),
+          );
+        }),
+      ),
+      key: _journeyKey,
+    );
+  }
+
+  Widget _buildTimelineItem({
+    required String company,
+    required String role,
+    required String period,
+    required bool isCurrent,
+    required bool isLast,
+  }) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 24,
+            child: Column(
+              children: [
+                Container(
+                  width: isCurrent ? 18 : 14,
+                  height: isCurrent ? 18 : 14,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isCurrent ? accentSecondary : accentColor,
+                    boxShadow: isCurrent
+                        ? [
+                            BoxShadow(
+                              color: accentSecondary.withOpacity(0.6),
+                              blurRadius: 14,
+                              spreadRadius: 3,
+                            ),
+                          ]
+                        : null,
+                  ),
+                ),
+                if (!isLast)
+                  Expanded(
+                    child: Container(
+                      width: 2,
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      color: borderColor.withOpacity(0.4),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 28),
+              child: GlassCard(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            company,
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                              color: textLight,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            role,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: accentColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            period,
+                            style: const TextStyle(fontSize: 12, color: textGray),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (isCurrent)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: accentSecondary.withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(100),
+                          border: Border.all(
+                            color: accentSecondary.withOpacity(0.4),
+                          ),
+                        ),
+                        child: const Text(
+                          'Current',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: accentSecondary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSkillsSection(BuildContext context, AppLocalizations l10n) {
+    final isMobile = _isMobile;
+    final categories = [
+      ('Mobile', <String>['Android', 'iOS', 'Flutter', 'Kotlin', 'Java', 'Swift']),
+      ('Backend', <String>['Firebase', 'REST API', 'SQLite', 'WebSocket']),
+      ('Architecture', <String>['MVVM', 'Clean Code', 'Git', 'Agile', 'CI/CD']),
+    ];
+
+    Widget skillCard(int i) {
+      return ScrollReveal(
+        scrollController: _scrollController,
+        delay: Duration(milliseconds: i * 100),
+        child: GlassCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                categories[i].$1,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: accentSecondary,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: categories[i].$2.map((s) => SkillChip(s)).toList(),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return _buildSection(
+      context,
+      l10n.skillsTitle,
+      isMobile
+          ? Column(
+              children: List.generate(
+                categories.length,
+                (i) => Padding(
+                  padding: const EdgeInsets.only(bottom: 20),
+                  child: skillCard(i),
+                ),
+              ),
+            )
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: List.generate(
+                categories.length,
+                (i) => [
+                  Expanded(child: skillCard(i)),
+                  if (i < categories.length - 1) const SizedBox(width: 20),
+                ],
+              ).expand((w) => w).toList(),
+            ),
+      key: _skillsKey,
+    );
+  }
+
+  Widget _buildProjectsSection(BuildContext context, AppLocalizations l10n) {
+    final isMobile = _isMobile;
+    final projects = [
+      (
+        'Retail Workforce Solutions',
+        'Enterprise platform for employee scheduling and task sync across retail chains.',
+        <String>['Android', 'Java', 'REST API', 'SQLite'],
+        Icons.store_rounded,
+      ),
+      (
+        'Media Streaming Platform',
+        'Full-featured media app with live streaming, content management and analytics.',
+        <String>['Android', 'Kotlin', 'Firebase'],
+        Icons.play_circle_rounded,
+      ),
+      (
+        'E-Commerce Mobile App',
+        'Complete shopping solution with payment gateway and real-time order tracking.',
+        <String>['Android', 'iOS', 'Flutter', 'Firebase'],
+        Icons.shopping_bag_rounded,
+      ),
+      (
+        'AR Product Visualization',
+        'Augmented reality experience for product visualization using ARCore.',
+        <String>['Android', 'ARCore', 'Java'],
+        Icons.view_in_ar_rounded,
+      ),
+    ];
+
+    Widget card(int i) {
+      final p = projects[i];
+      return ScrollReveal(
+        scrollController: _scrollController,
+        delay: Duration(milliseconds: (i % 2) * 120),
+        child: Padding(
+          padding: const EdgeInsets.only(bottom: 20),
+          child: _buildProjectCard(
+            title: p.$1,
+            description: p.$2,
+            tags: p.$3,
+            icon: p.$4,
+          ),
+        ),
+      );
+    }
+
+    return _buildSection(
+      context,
+      l10n.projectsTitle,
+      isMobile
+          ? Column(children: List.generate(projects.length, card))
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(child: Column(children: [card(0), card(2)])),
+                const SizedBox(width: 20),
+                Expanded(child: Column(children: [card(1), card(3)])),
+              ],
+            ),
+      key: _projectsKey,
+    );
+  }
+
+  Widget _buildProjectCard({
+    required String title,
+    required String description,
+    required List<String> tags,
+    required IconData icon,
+  }) {
+    return GlassCard(
+      padding: EdgeInsets.zero,
+      glowOnHover: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: 200,
+            height: 130,
             decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(16),
-              ),
               gradient: LinearGradient(
                 colors: [
-                  accentColor.withOpacity(0.2),
-                  accentSecondary.withOpacity(0.2),
+                  accentColor.withOpacity(0.3),
+                  accentSecondary.withOpacity(0.15),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
             ),
-            child: const Center(
-              child: Icon(Icons.phone_android, size: 60, color: accentColor),
+            child: Center(
+              child: Icon(icon, size: 52, color: accentSecondary),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 24,
+                    fontSize: 17,
                     fontWeight: FontWeight.bold,
                     color: textLight,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Text(
                   description,
-                  style: TextStyle(fontSize: 16, color: textGray, height: 1.6),
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: textGray,
+                    height: 1.5,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 14),
                 Wrap(
-                  spacing: 10,
-                  runSpacing: 10,
+                  spacing: 6,
+                  runSpacing: 6,
                   children: tags
                       .map(
                         (tag) => Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
+                            horizontal: 10,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             color: accentColor.withOpacity(0.1),
                             border: Border.all(
                               color: accentColor.withOpacity(0.3),
                             ),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(100),
                           ),
                           child: Text(
                             tag,
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: accentColor,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
                       )
                       .toList(),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Row(
-                        children: [
-                          HoverScaleButton(
-                            onTap: () {},
-                            child: ElevatedButton(
-                              onPressed: () {},
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: accentColor,
-                                foregroundColor: textLight,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 10,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Text('View Demo'),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          HoverScaleButton(
-                            onTap: () {},
-                            child: OutlinedButton(
-                              onPressed: () {},
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(
-                                  color: accentColor.withOpacity(0.5),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 10,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                              ),
-                              child: const Text(
-                                'GitHub',
-                                style: TextStyle(color: accentColor),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: const [
-                          AppStoreButton(
-                            platform: 'App Store',
-                            url: 'https://apps.apple.com',
-                          ),
-                          SizedBox(width: 12),
-                          AppStoreButton(
-                            platform: 'Google Play',
-                            url: 'https://play.google.com',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
                 ),
               ],
             ),
@@ -1003,209 +844,144 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
     );
   }
 
-  void _handleMobileTabTap(int index) {
-    setState(() => _selectedIndex = index);
-    switch (index) {
-      case 0:
-        _scrollToSection(_heroKey);
-        break;
-      case 1:
-        _scrollToSection(_aboutKey);
-        break;
-      case 2:
-        _scrollToSection(_projectsKey);
-        break;
-      case 3:
-        _scrollToSection(_skillsKey);
-        break;
-      case 4:
-        _scrollToSection(_contactKey);
-        break;
-    }
-  }
-
-  Widget _buildNavItem(String label, GlobalKey key) {
-    return TextButton(
-      onPressed: () => _scrollToSection(key),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: textLight,
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
+  Widget _buildContactSection(BuildContext context, AppLocalizations l10n) {
+    return Container(
+      key: _contactKey,
+      padding: EdgeInsets.symmetric(
+        horizontal: _hPad,
+        vertical: kSectionVerticalPadding,
+      ),
+      child: ScrollReveal(
+        scrollController: _scrollController,
+        child: Column(
+          children: [
+            SectionTitle(l10n.contactTitle, centerAlign: true),
+            const SizedBox(height: 20),
+            Text(
+              l10n.contactDescription,
+              style: const TextStyle(fontSize: 16, color: textGray),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 48),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 16,
+              runSpacing: 12,
+              children: [
+                HoverScaleButton(
+                  onTap: () => launchUrl(
+                    Uri.parse('mailto:ahmedessamedeen@gmail.com'),
+                  ),
+                  child: _buildPrimaryButton('Email Me'),
+                ),
+                HoverScaleButton(
+                  onTap: () => launchUrl(
+                    Uri.parse('https://github.com/ahmedessameldeen'),
+                  ),
+                  child: _buildOutlineButton('GitHub'),
+                ),
+                HoverScaleButton(
+                  onTap: () => launchUrl(
+                    Uri.parse('https://linkedin.com/in/ahmedessamedeen'),
+                  ),
+                  child: _buildOutlineButton('LinkedIn'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 60),
+            Divider(color: borderColor.withOpacity(0.3)),
+            const SizedBox(height: 24),
+            Text(
+              l10n.footerCopyright,
+              style: const TextStyle(color: textGray, fontSize: 13),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildContactForm() {
+  Widget _buildSection(
+    BuildContext context,
+    String title,
+    Widget child, {
+    GlobalKey? key,
+  }) {
     return Container(
-      width: 400,
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor),
+      key: key,
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: _hPad,
+        vertical: kSectionVerticalPadding,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Send Message',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: textLight,
-            ),
+          ScrollReveal(
+            scrollController: _scrollController,
+            child: SectionTitle(title),
           ),
-          const SizedBox(height: 24),
-          TextField(
-            decoration: InputDecoration(
-              labelText: 'Name',
-              labelStyle: const TextStyle(color: textGray),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: borderColor),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: borderColor),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: accentColor),
-              ),
-              filled: true,
-              fillColor: secondaryBg,
-            ),
-            style: const TextStyle(color: textLight),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            decoration: InputDecoration(
-              labelText: 'Email',
-              labelStyle: const TextStyle(color: textGray),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: borderColor),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: borderColor),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: accentColor),
-              ),
-              filled: true,
-              fillColor: secondaryBg,
-            ),
-            style: const TextStyle(color: textLight),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            maxLines: 4,
-            decoration: InputDecoration(
-              labelText: 'Message',
-              labelStyle: const TextStyle(color: textGray),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: borderColor),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: borderColor),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: accentColor),
-              ),
-              filled: true,
-              fillColor: secondaryBg,
-            ),
-            style: const TextStyle(color: textLight),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            onPressed: () =>
-                launchUrl(Uri.parse('mailto:ahmedessamedeen@gmail.com')),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: accentColor,
-              foregroundColor: primaryBg,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              minimumSize: const Size(double.infinity, 50),
-            ),
-            child: const Text(
-              'Send Message',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-          ),
+          const SizedBox(height: 60),
+          child,
         ],
       ),
     );
   }
+}
 
-  Widget _buildContactInfo() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Get in Touch',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: textLight,
-          ),
-        ),
-        const SizedBox(height: 24),
-        _buildContactItem('📧', 'ahmedessamedeen@gmail.com'),
-        const SizedBox(height: 16),
-        _buildContactItem('📍', 'Egypt'),
-        const SizedBox(height: 16),
-        _buildContactItem('💼', 'Available for opportunities'),
-        const SizedBox(height: 32),
-        Row(
-          children: [
-            _buildSocialIcon('GitHub', 'https://github.com/ahmedessameldeen'),
-            const SizedBox(width: 16),
-            _buildSocialIcon(
-              'LinkedIn',
-              'https://linkedin.com/in/ahmedessamedeen',
-            ),
-          ],
-        ),
-      ],
-    );
-  }
+class _NavItem extends StatefulWidget {
+  final String label;
+  final bool isActive;
+  final VoidCallback onTap;
 
-  Widget _buildContactItem(String icon, String text) {
-    return Row(
-      children: [
-        Text(icon, style: const TextStyle(fontSize: 20)),
-        const SizedBox(width: 12),
-        Text(text, style: const TextStyle(fontSize: 16, color: textGray)),
-      ],
-    );
-  }
+  const _NavItem({
+    required this.label,
+    required this.isActive,
+    required this.onTap,
+  });
 
-  Widget _buildSocialIcon(String platform, String url) {
-    return GestureDetector(
-      onTap: () => launchUrl(Uri.parse(url)),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: cardBg,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: borderColor),
-        ),
-        child: Text(
-          platform,
-          style: const TextStyle(
-            color: accentColor,
-            fontWeight: FontWeight.w600,
+  @override
+  State<_NavItem> createState() => _NavItemState();
+}
+
+class _NavItemState extends State<_NavItem> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                widget.label,
+                style: TextStyle(
+                  color: widget.isActive || _hovered ? accentSecondary : textGray,
+                  fontSize: 14,
+                  fontWeight: widget.isActive ? FontWeight.w600 : FontWeight.w400,
+                ),
+              ),
+              const SizedBox(height: 4),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                height: 2,
+                width: widget.isActive ? 24.0 : 0.0,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [accentColor, accentSecondary],
+                  ),
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+            ],
           ),
         ),
       ),
