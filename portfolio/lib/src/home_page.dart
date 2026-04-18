@@ -630,9 +630,27 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
   Widget _buildSkillsSection(BuildContext context, AppLocalizations l10n) {
     final isMobile = _isMobile;
     final categories = [
-      ('Mobile', <String>['Android', 'iOS', 'Flutter', 'Kotlin', 'Java', 'Swift']),
-      ('Backend', <String>['Firebase', 'REST API', 'SQLite', 'WebSocket']),
-      ('Architecture', <String>['MVVM', 'Clean Code', 'Git', 'Agile', 'CI/CD']),
+      ('Mobile', [
+        ('Android', Icons.android),
+        ('iOS', Icons.apple),
+        ('Flutter', Icons.flutter_dash),
+        ('Kotlin', Icons.terminal),
+        ('Java', Icons.coffee),
+        ('Swift', Icons.bolt),
+      ]),
+      ('Backend', [
+        ('Firebase', Icons.local_fire_department),
+        ('REST API', Icons.api),
+        ('SQLite', Icons.storage),
+        ('WebSocket', Icons.cable),
+      ]),
+      ('Architecture', [
+        ('MVVM', Icons.layers),
+        ('Clean Code', Icons.auto_fix_high),
+        ('Git', Icons.account_tree),
+        ('Agile', Icons.loop),
+        ('CI/CD', Icons.build_circle),
+      ]),
     ];
 
     Widget skillCard(int i) {
@@ -654,9 +672,11 @@ class _PortfolioHomePageState extends State<PortfolioHomePage> {
               ),
               const SizedBox(height: 16),
               Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: categories[i].$2.map((s) => SkillChip(s)).toList(),
+                spacing: 4,
+                runSpacing: 4,
+                children: categories[i].$2
+                    .map((s) => SkillChip(s.$1, icon: s.$2))
+                    .toList(),
               ),
             ],
           ),

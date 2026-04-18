@@ -119,8 +119,9 @@ class _GlassCardState extends State<GlassCard> {
 
 class SkillChip extends StatefulWidget {
   final String label;
+  final IconData icon;
 
-  const SkillChip(this.label, {super.key});
+  const SkillChip(this.label, {required this.icon, super.key});
 
   @override
   State<SkillChip> createState() => _SkillChipState();
@@ -134,23 +135,30 @@ class _SkillChipState extends State<SkillChip> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: _hovered ? accentColor.withOpacity(0.25) : accentColor.withOpacity(0.1),
-          border: Border.all(
-            color: _hovered ? accentSecondary.withOpacity(0.8) : accentColor.withOpacity(0.4),
-          ),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          widget.label,
-          style: TextStyle(
-            fontSize: 13,
-            color: _hovered ? accentSecondary : textGrayLight,
-            fontWeight: FontWeight.w500,
-          ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedScale(
+              scale: _hovered ? 1.15 : 1.0,
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                widget.icon,
+                size: 32,
+                color: _hovered ? accentSecondary : accentColor,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              widget.label,
+              style: TextStyle(
+                fontSize: 11,
+                color: _hovered ? textLight : textGray,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );
